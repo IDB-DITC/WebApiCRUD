@@ -1,0 +1,232 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+
+
+<div class="card" data-bind="visible: state() == 'index'">
+
+    <div class="card-header btn-group">
+        <button data-bind="click: addNew" class="btn btn-info">Add</button>
+
+        <button data-bind="click: getList" class="btn btn-info">Refresh</button>
+    </div>
+
+
+   
+
+
+
+    <table class="card-body table table-responsive">
+        <thead>
+            <tr>
+                <th>
+                    ID
+                </th>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Email
+                </th>
+                <th>
+                    Operation
+                </th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: contactlist">
+            <tr>
+                <td data-bind="text: ContactId"></td>
+                <td data-bind="text: Name"></td>
+                <td data-bind="text: Email"></td>
+                <td class="btn-group">
+                    <button data-bind="click: getContact " class="btn btn-warning">Edit</button>
+                    <button data-bind="click: deleteContact " class="btn btn-danger">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+
+</div>
+
+
+<div data-bind="visible: state() == 'form'" class="card">
+
+
+    <div class="card-body">
+        <input type="hidden" data-bind="value: contact.ContactId " />
+
+        <div class="row">
+            <label class="text-black col-md-5">First Name : </label>
+            <input class="form-control col-md-7" data-bind="value: contact.FirstName " />
+        </div>
+        <div class="row">
+            <label class="text-black col-md-5">Last Name : </label>
+            <input class="form-control col-md-7" data-bind="value: contact.LastName " />
+        </div>
+        <div class="row">
+            <label class="text-black col-md-5">Email : </label>
+            <input class="form-control col-md-7" type="email" data-bind="value: contact.Email " />
+        </div>
+    </div>
+
+
+    <div class="card-footer btn-group-vertical">
+        <button data-bind="click: saveContact" class="btn btn-success">Submit</button>
+        <button data-bind="click: getList" class="btn btn-info">Cancel</button>
+    </div>
+   
+</div>
+
+
+<script>
+
+    var contactlist = ko.observableArray([]);
+
+
+
+
+
+
+
+
+    var contact = ko.observable({
+        contact: 0,
+        firstname: "",
+        lastname: "",
+        email: ""
+    })
+    var state = ko.observable('index');
+
+
+    var contact = {
+        ContactId: ko.observable(0),
+        FirstName: ko.observable(''),
+        LastName: ko.observable(''),
+        Email: ko.observable('')
+    };
+
+
+    addNew = function () {
+        state('form');
+
+
+        contact.ContactId(0);
+        contact.FirstName('');
+        contact.LastName('');
+        contact.Email('');
+        
+
+
+    }
+
+    getContact = function (c) {
+
+        $.ajax("/api/contact/" + c.ContactId, {
+            type: "get",
+
+
+            success: function (data) {
+                //alert(JSON.stringify(data));
+                //contact = data;
+                contact.ContactId ( data.ContactId);
+                contact.FirstName ( data.FirstName );
+                contact.LastName( data.LastName );
+                contact.Email ( data.Email);
+
+
+
+                state('form');
+
+            },
+            error: function (error) {
+                alert(JSON.stringify(error));
+            }
+        });
+
+
+    }
+
+    deleteContact = function (c) {
+
+        $.ajax("/api/contact/"+c.ContactId, {
+            type: "delete",            
+            
+            success: function () {
+
+                alert('data deleted');
+
+                getList();
+
+            },
+            error: function (error) {
+                alert(JSON.stringify(error));
+            }
+        });
+
+
+    };
+
+    saveContact = function () {
+
+        $.ajax("/api/contact/", {
+            type: contact.ContactId() == 0 ? "post" : "put",
+            data: {
+                "ContactId": contact.ContactId(),
+                "FirstName": contact.FirstName(),
+                "LastName": contact.LastName(),
+                "Email": contact.Email()
+            }            
+            ,
+            success: function () {
+
+                alert('data saved');
+
+                getList();
+
+            },
+            error: function (error) {
+                alert(JSON.stringify(error));
+            }
+        });
+
+
+    }
+
+    getList = function () {
+
+        $.ajax("/api/contact", {
+            type: "get",
+
+
+            success: function (data) {
+
+                contactlist.removeAll();
+
+                for (var i = 0; i < data.length; i++) {
+                    contactlist.push(data[i]);
+                }
+                state('index');
+
+            },
+            error: function (error) {
+                alert(JSON.stringify(error));
+            }
+        });
+
+
+    }
+
+
+    getList();
+
+
+
+
+    ko.applyBindings();
+</script>
